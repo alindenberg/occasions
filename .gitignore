@@ -1,0 +1,7 @@
+env
+.env
+
+sql_app.db
+
+__pycache__/
+**.pyc
