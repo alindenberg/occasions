@@ -1,5 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
 
 from db.database import Base
 
@@ -12,6 +11,3 @@ class Occasion(Base):
     email = Column(String, index=True)
     date = Column(String, index=True)
     custom_input = Column(String, index=True)
-    # user_id = Column(Integer, ForeignKey("users.id"))
-
-    # user = relationship("User", back_populates="occasions")

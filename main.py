@@ -1,7 +1,8 @@
 from datetime import date
 from fastapi import FastAPI, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from typing import List, Optional
 
 import models
 from db.database import get_db, engine
@@ -15,9 +16,13 @@ app = FastAPI()
 
 class OccasionIn(BaseModel):
     type: str
-    email: str
+    email: EmailStr
     date: date
-    custom_input: str = None
+    custom_input: Optional[str]
+
+
+class OccasionOut(OccasionIn):
+    id: int
 
 
 @app.get("/")
@@ -31,6 +36,23 @@ async def create_occasion(occasion: OccasionIn, db: Session = Depends(get_db)):
     return {"message": "Occasion created successfully"}
 
 
-@app.get("/occasions/")
+@app.get("/occasions/", response_model=List[OccasionOut])
 async def get_occasions(db: Session = Depends(get_db)):
     return OccasionService().get_occasions(db)
+
+
+@app.get("/occasions/{occasion_id}", response_model=OccasionOut)
+async def get_occasion(occasion_id: int, db: Session = Depends(get_db)):
+    return OccasionService().get_occasion(db, occasion_id)
+
+
+@app.put("/occasions/{occasion_id}")
+async def update_occasion(occasion_id: int, occasion: OccasionIn, db: Session = Depends(get_db)):
+    OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
+    return {"message": "Occasion updated successfully"}
+
+
+@app.delete("/occasions/{occasion_id}")
+async def delete_occasion(occasion_id: int, db: Session = Depends(get_db)):
+    OccasionService().delete_occasion(db, occasion_id)
+    return {"message": "Occasion deleted successfully"}
