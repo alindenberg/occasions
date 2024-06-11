@@ -1,8 +1,7 @@
 
-from db.database import SessionLocal
 from sqlalchemy.orm import Session
 
-from models import Occasion
+from occasions.models import Occasion
 
 
 class OccasionService:
