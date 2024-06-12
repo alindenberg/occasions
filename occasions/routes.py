@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from db.database import get_db
-from occasions.service import OccasionService
+from occasions.services import OccasionService
 
 router = APIRouter()
 
