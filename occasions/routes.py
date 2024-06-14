@@ -1,35 +1,26 @@
 from datetime import date
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 
 from db.database import get_db
 from occasions.services import OccasionService
+from occasions.types import OccasionIn, OccasionOut
+from users.models import User
+from users.utils import get_current_user
 
 router = APIRouter()
 
 
-class OccasionIn(BaseModel):
-    type: str
-    email: EmailStr
-    date: date
-    custom_input: Optional[str]
-
-
-class OccasionOut(OccasionIn):
-    id: int
-
-
 @router.post("/occasions/")
-async def create_occasion(occasion: OccasionIn, db: Session = Depends(get_db)):
-    OccasionService().create_occasion(db, **occasion.model_dump())
+async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    OccasionService().create_occasion(db, user=user, **occasion.model_dump())
     return {"message": "Occasion created successfully"}
 
 
 @router.get("/occasions/", response_model=List[OccasionOut])
-async def get_occasions(db: Session = Depends(get_db)):
-    return OccasionService().get_occasions(db)
+async def get_occasions(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return OccasionService().get_occasions_for_user(user.id, db)
 
 
 @router.get("/occasions/{occasion_id}", response_model=OccasionOut)

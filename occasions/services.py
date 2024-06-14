@@ -13,8 +13,8 @@ class OccasionService:
         db.refresh(occasion)
         return occasion
 
-    def get_occasions(self, db: Session):
-        return db.query(Occasion).all()
+    def get_occasions_for_user(self, user_id: int, db: Session):
+        return db.query(Occasion).filter(Occasion.user_id == user_id).all()
 
     def get_occasion(self, db: Session, occasion_id: int):
         return db.query(Occasion).get(occasion_id)
