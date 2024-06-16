@@ -1,6 +1,11 @@
 import asyncio
 import logging
+
 from fastapi import FastAPI
+from sqlalchemy.orm import Session
+
+from db.database import SessionLocal
+from occasions.models import Occasion
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
@@ -13,17 +18,14 @@ async def repeat_func(seconds: int, func):
 
 
 async def send_occasion_notifications():
-    logger.info("Sending occasion notifications")
+    db: Session = SessionLocal()
+    occasions = db.query(Occasion).all()
+    for occasion in occasions:
+        asyncio.create_task(occasion.send_notification(db))
 
 
 class OccasionTasks():
-    def __init__(self):
-        self.tasks = []
-
-    def add_task(self, task):
-        self.tasks.append(task)
-
     def init(self):
-        logger.info("Creating tasks")
+        logger.error("Creating tasks")
         # Start the background task
-        asyncio.create_task(repeat_func(60, send_occasion_notifications))
+        asyncio.create_task(repeat_func(5, send_occasion_notifications))

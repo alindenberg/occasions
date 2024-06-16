@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from db.database import get_db
 
 from users.models import User
-from users.constants import ACCESS_TOKEN_EXPIRE_MINUTES
 from users.services import UserService, UserAuthenticationService
 from users.utils import get_current_user
 
@@ -49,7 +48,7 @@ async def users(db: Session = Depends(get_db)):
     return await UserService().get_all_users(db)
 
 
-@router.post("/token")
+@router.post("/login")
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
     token = await UserAuthenticationService().login(db, form_data)
     return {"access_token": token, "token_type": "bearer"}

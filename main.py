@@ -18,10 +18,7 @@ app = FastAPI()
 app.include_router(occasion_routes.router)
 app.include_router(user_routes.router)
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+logging.basicConfig(level=logging.INFO)
 
 
 @app.on_event("startup")
