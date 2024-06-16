@@ -3,21 +3,16 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
-from pydantic import BaseModel
 
 from users.constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from users.models import User
-
-
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
+from users.types import UserIn
 
 
 class UserService:
     async def create_user(self, db, user):
         db_user = User(
+            created=datetime.now(timezone.utc),
             username=user.username,
             email=user.email,
             password=user.password
@@ -49,7 +44,7 @@ class UserAuthenticationService(UserService):
         access_token = self.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
         return access_token
 
-    async def signup(self, db, user: UserCreate):
+    async def signup(self, db, user: UserIn):
         user.password = self.get_password_hash(user.password)
         user = await self.create_user(db, user)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

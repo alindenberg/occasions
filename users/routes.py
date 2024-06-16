@@ -9,41 +9,18 @@ from db.database import get_db
 
 from users.models import User
 from users.services import UserService, UserAuthenticationService
+from users.types import UserIn, UserOut
 from users.utils import get_current_user
 
 router = APIRouter()
 
 
-class UserIn(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-
-class UserOut(UserIn):
-    id: int
-
-
-class UserSignupForm(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-
-
-class TokenData(BaseModel):
-    username: str
-
-
-class UserInDB(BaseModel):
-    password: str
-
-
-@router.get("/users/me")
+@router.get("/users/me", response_model=UserOut)
 async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
 
 
-@router.get("/users")
+@router.get("/users", response_model=list[UserOut])
 async def users(db: Session = Depends(get_db)):
     return await UserService().get_all_users(db)
 
@@ -55,6 +32,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: 
 
 
 @router.post("/signup")
-async def signup(user: UserSignupForm, db: Session = Depends(get_db)):
+async def signup(user: UserIn, db: Session = Depends(get_db)):
     token = await UserAuthenticationService().signup(db, user)
     return {"access_token": token, "token_type": "bearer"}

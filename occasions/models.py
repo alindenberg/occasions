@@ -8,6 +8,7 @@ from db.database import Base
 
 logger = logging.getLogger(__name__)
 
+
 class Occasion(Base):
     __tablename__ = "occasions"
 
@@ -29,7 +30,7 @@ class Occasion(Base):
 
         summary = await self.generate_summary()
 
-        await self._send_email(summary, db)
+        await self._send_email(summary)
 
         self.summary = summary
         self.date_processed = datetime.now(timezone.utc)
@@ -38,7 +39,7 @@ class Occasion(Base):
     async def generate_summary(self):
         return f"Occasion {self.id} is coming up on {datetime.utcnow()}"
 
-    async def _send_email(self):
+    async def _send_email(self, summary):
         pass
         # self.custom_input = summary
         # db.commit()

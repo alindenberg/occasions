@@ -1,4 +1,4 @@
-
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from occasions.models import Occasion
@@ -6,7 +6,7 @@ from occasions.models import Occasion
 
 class OccasionService:
     def create_occasion(self, db: Session, **kwargs):
-        print(kwargs)
+        kwargs["created"] = datetime.now(timezone.utc)
         occasion = Occasion(**kwargs)
         db.add(occasion)
         db.commit()

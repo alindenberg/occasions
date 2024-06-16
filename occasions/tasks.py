@@ -26,6 +26,7 @@ async def send_occasion_notifications():
 
 class OccasionTasks():
     def init(self):
-        logger.error("Creating tasks")
+        logger.info("Creating occasion tasks")
         # Start the background task
-        asyncio.create_task(repeat_func(5, send_occasion_notifications))
+        # TODO: Ensure top of hour run
+        asyncio.create_task(repeat_func(60*60, send_occasion_notifications))

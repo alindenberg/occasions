@@ -2,16 +2,10 @@ import logging
 from fastapi import FastAPI
 
 from db.database import engine
-from occasions import models as occasion_models
 from occasions import routes as occasion_routes
 from occasions.tasks import OccasionTasks as occasion_tasks
 
-from users import models as user_models
 from users import routes as user_routes
-
-# Create tables
-occasion_models.Base.metadata.create_all(bind=engine)
-user_models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
