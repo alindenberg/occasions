@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from sqlalchemy.orm import Session
 
@@ -28,5 +29,12 @@ class OccasionTasks():
     def init(self):
         logger.info("Creating occasion tasks")
         # Start the background task
-        # TODO: Ensure top of hour run
-        asyncio.create_task(repeat_func(60*60, send_occasion_notifications))
+        asyncio.create_task(self.schedule_task(send_occasion_notifications))
+
+    async def schedule_task(self, func):
+        # Ensure top of hour run
+        now = datetime.now(timezone.utc)
+        if now.minute != 0 or now.second != 0:
+            wait_seconds = 60*(60 - now.minute) - now.second
+            await asyncio.sleep(wait_seconds)
+        await repeat_func(60*60, func)
