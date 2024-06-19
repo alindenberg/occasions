@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -9,6 +10,7 @@ from users.models import User
 from users.utils import get_current_user
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/occasions/")
@@ -17,8 +19,10 @@ async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current
         OccasionService().create_occasion(db, user=user, **occasion.model_dump())
         return {"message": "Occasion created successfully"}
     except ValueError as e:
+        logger.error(f"Value error raised while creating the occasion - {e}")
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
+    except Exception as e:
+        logger.error(f"An error occurred while creating the occasion - {e}")
         raise HTTPException(status_code=500, detail="An error occurred while creating the occasion")
 
 
