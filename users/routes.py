@@ -42,6 +42,8 @@ async def signup(user: UserIn, db: Session = Depends(get_db)):
     try:
         token = await UserAuthenticationService().signup(db, user)
         return {"access_token": token, "token_type": "bearer"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"An error occurred while signing up - {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while signing up")

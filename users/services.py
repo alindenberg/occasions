@@ -1,4 +1,5 @@
 import jwt
+import logging
 
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordRequestForm
@@ -9,9 +10,12 @@ from users.exceptions import UserNotFoundException
 from users.models import User
 from users.types import UserIn
 
+logger = logging.getLogger(__name__)
+
 
 class UserService:
     async def create_user(self, db, user):
+        await self._validate_unique_email(db, user.email)
         db_user = User(
             created=datetime.now(timezone.utc),
             email=user.email,
@@ -31,25 +35,41 @@ class UserService:
     async def get_all_users(self, db):
         return db.query(User).all()
 
+    async def _validate_unique_email(self, db, email):
+        user = db.query(User).filter(User.email == email).count()
+        print("user ", user)
+        if user:
+            raise ValueError("Email already registered")
+
 
 class UserAuthenticationService(UserService):
     def __init__(self):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     async def login(self, db, form_data: OAuth2PasswordRequestForm):
-        user = await self.authenticate_user(db, form_data.username, form_data.password)
-        if not user:
-            raise UserNotFoundException()
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
-        return access_token
+        try:
+            user = await self.authenticate_user(db, form_data.username, form_data.password)
+            if not user:
+                raise UserNotFoundException()
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
+            return access_token
+        except Exception as e:
+            logger.error(f"An error occurred while logging in: {e}")
+            raise e
 
     async def signup(self, db, user: UserIn):
-        user.password = self.get_password_hash(user.password)
-        user = await self.create_user(db, user)
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
-        return access_token
+        try:
+            user.password = self.get_password_hash(user.password)
+            user = await self.create_user(db, user)
+            access_token = self.create_access_token(
+                data={"sub": user.email},
+                expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            )
+            return access_token
+        except Exception as e:
+            logger.error(f"An error occurred while signing up: {e}")
+            raise e
 
     async def authenticate_user(self, db, email: str, password: str):
         user = await self.get_user_by_email(db, email)
