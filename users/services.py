@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 
 from users.constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from users.exceptions import UserNotFoundException
 from users.models import User
 from users.types import UserIn
 
@@ -13,7 +14,6 @@ class UserService:
     async def create_user(self, db, user):
         db_user = User(
             created=datetime.now(timezone.utc),
-            username=user.username,
             email=user.email,
             password=user.password
         )
@@ -25,8 +25,8 @@ class UserService:
     async def get_user(self, db, user_id):
         return db.query(User).get(user_id)
 
-    async def get_user_by_username(self, db, username):
-        return db.query(User).filter(User.username == username).first()
+    async def get_user_by_email(self, db, email):
+        return db.query(User).filter(User.email == email).first()
 
     async def get_all_users(self, db):
         return db.query(User).all()
@@ -39,20 +39,20 @@ class UserAuthenticationService(UserService):
     async def login(self, db, form_data: OAuth2PasswordRequestForm):
         user = await self.authenticate_user(db, form_data.username, form_data.password)
         if not user:
-            return False
+            raise UserNotFoundException()
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
+        access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
         return access_token
 
     async def signup(self, db, user: UserIn):
         user.password = self.get_password_hash(user.password)
         user = await self.create_user(db, user)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = self.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
+        access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
         return access_token
 
-    async def authenticate_user(self, db, username: str, password: str):
-        user = await self.get_user_by_username(db, username)
+    async def authenticate_user(self, db, email: str, password: str):
+        user = await self.get_user_by_email(db, email)
         if not user:
             return False
         if not self.verify_password(password, user.password):

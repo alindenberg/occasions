@@ -1,5 +1,4 @@
-from datetime import date
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -14,8 +13,13 @@ router = APIRouter()
 
 @router.post("/occasions/")
 async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    OccasionService().create_occasion(db, user=user, **occasion.model_dump())
-    return {"message": "Occasion created successfully"}
+    try:
+        OccasionService().create_occasion(db, user=user, **occasion.model_dump())
+        return {"message": "Occasion created successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="An error occurred while creating the occasion")
 
 
 @router.get("/occasions/", response_model=List[OccasionOut])
