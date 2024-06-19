@@ -1,15 +1,19 @@
 from datetime import datetime, timezone
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from occasions.models import Occasion
+from users.models import User
 
 
 class OccasionService:
-    def create_occasion(self, db: Session, **kwargs):
+    def create_occasion(self, db: Session, user: User, **kwargs):
         try:
             kwargs["created"] = datetime.now(timezone.utc)
+            kwargs["user_id"] = user.id
+            kwargs["email"] = user.email
             occasion = Occasion(**kwargs)
-            self._validate_occasion(occasion)
+            self._validate_occasion(db, occasion)
             db.add(occasion)
             db.commit()
             db.refresh(occasion)
@@ -37,8 +41,12 @@ class OccasionService:
         db.commit()
         return {"message": "Occasion deleted successfully"}
 
-    def _validate_occasion(self, occasion: Occasion):
-        user = occasion.user
-        existing_occasions = user.occasions.exclude(id=occasion.id).count()
+    def _validate_occasion(self, db: Session, occasion: Occasion):
+        existing_occasions = db.query(Occasion).filter(
+            and_(
+                Occasion.user_id == occasion.user_id,
+                Occasion.id != occasion.id
+            )
+        ).count()
         if existing_occasions >= 3:
             raise ValueError("User can only have 3 upcoming occasions")
