@@ -5,7 +5,7 @@ from typing import Optional
 
 class OccasionIn(BaseModel):
     type: str
-    email: EmailStr
+    # email: EmailStr
     date: date
     custom_input: Optional[str]
 
@@ -13,5 +13,6 @@ class OccasionIn(BaseModel):
 class OccasionOut(OccasionIn):
     id: int
     user_id: int
+    email: EmailStr
     date_processed: Optional[datetime]
     summary: Optional[str]
