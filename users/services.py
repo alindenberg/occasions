@@ -50,7 +50,7 @@ class UserAuthenticationService(UserService):
         try:
             user = await self.authenticate_user(db, form_data.username, form_data.password)
             if not user:
-                raise UserNotFoundException()
+                raise UserNotFoundException("Invalid username of password")
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
             return access_token

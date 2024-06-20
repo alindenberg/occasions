@@ -16,7 +16,7 @@ class Occasion(Base):
     created = Column(DateTime, nullable=False)
     type = Column(String, index=True)
     email = Column(String, index=True)
-    date = Column(String, index=True)
+    date = Column(DateTime, index=True)
     custom_input = Column(String, index=True)
     summary = Column(Text, nullable=True)
     date_processed = Column(DateTime, nullable=True)

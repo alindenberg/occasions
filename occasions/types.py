@@ -6,7 +6,7 @@ from typing import Optional
 class OccasionIn(BaseModel):
     type: str
     # email: EmailStr
-    date: date
+    date: datetime
     custom_input: Optional[str]
 
 
