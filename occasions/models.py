@@ -14,6 +14,7 @@ class Occasion(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     created = Column(DateTime, nullable=False)
+    label = Column(String, index=True)
     type = Column(String, index=True)
     email = Column(String, index=True)
     date = Column(DateTime, index=True)
