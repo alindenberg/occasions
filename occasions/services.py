@@ -43,10 +43,12 @@ class OccasionService:
         return {"message": "Occasion deleted successfully"}
 
     def _validate_occasion(self, db: Session, occasion: Occasion):
+        current_time = datetime.now(timezone.utc)
         existing_occasions = db.query(Occasion).filter(
             and_(
                 Occasion.user_id == occasion.user_id,
-                Occasion.id != occasion.id
+                Occasion.id != occasion.id,
+                Occasion.date >= current_time.isoformat()
             )
         ).count()
         if existing_occasions >= 3:
