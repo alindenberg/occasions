@@ -1,8 +1,8 @@
-"""initial migration
+"""initial migration 22
 
-Revision ID: 9c14b9f25752
+Revision ID: 158bad216f5c
 Revises: 
-Create Date: 2024-06-23 10:38:35.577678
+Create Date: 2024-06-25 18:59:29.733913
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9c14b9f25752'
+revision: str = '158bad216f5c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,14 +32,14 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('occasions',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('created', sa.DateTime(), nullable=False),
+    sa.Column('created', sa.String(), nullable=False),
     sa.Column('label', sa.String(), nullable=True),
     sa.Column('type', sa.String(), nullable=True),
     sa.Column('email', sa.String(), nullable=True),
-    sa.Column('date', sa.DateTime(), nullable=True),
+    sa.Column('date', sa.String(), nullable=True),
     sa.Column('custom_input', sa.String(), nullable=True),
     sa.Column('summary', sa.Text(), nullable=True),
-    sa.Column('date_processed', sa.DateTime(), nullable=True),
+    sa.Column('date_processed', sa.String(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')

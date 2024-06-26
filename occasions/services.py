@@ -9,7 +9,8 @@ from users.models import User
 class OccasionService:
     def create_occasion(self, db: Session, user: User, **kwargs):
         try:
-            kwargs["created"] = datetime.now(timezone.utc)
+            kwargs["date"] = kwargs["date"].isoformat() if kwargs.get("date") else None
+            kwargs["created"] = datetime.now(timezone.utc).isoformat()
             kwargs["user_id"] = user.id
             kwargs["email"] = user.email
             occasion = Occasion(**kwargs)

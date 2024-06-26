@@ -1,5 +1,5 @@
-from datetime import date, datetime
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
 
@@ -19,3 +19,4 @@ class OccasionOut(OccasionIn):
     custom_input: Optional[str]
     date_processed: Optional[datetime]
     summary: Optional[str]
+    created: datetime
