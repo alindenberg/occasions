@@ -1,9 +1,19 @@
+import asyncio
+import logging
+
 from datetime import datetime, timezone
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from occasions.constants import LLM_PROMPT
 from occasions.models import Occasion
 from users.models import User
+
+
+logger = logging.getLogger(__name__)
 
 
 class OccasionService:
@@ -41,6 +51,45 @@ class OccasionService:
         db.query(Occasion).filter(Occasion.id == occasion_id).delete()
         db.commit()
         return {"message": "Occasion deleted successfully"}
+
+    async def process_occasion(self, db: Session, occasion: Occasion):
+        try:
+            if occasion.date_processed:
+                logger.warning(f"Occasion {occasion.id} has already been processed")
+                return
+
+            logger.info(f"Processing occasion {occasion.id}")
+            summary = await self._generate_summary(occasion)
+
+            occasion.summary = summary
+            occasion.date_processed = datetime.now(timezone.utc).isoformat()
+            db.commit()
+
+            asyncio.create_task(self._send_summary(summary))
+
+            logger.info(f"Occasion {occasion.id} processed successfully")
+        except Exception as exc:
+            logger.error(f"Error processing occasion {occasion.id}. {exc}")
+            db.rollback()
+
+    async def _send_summary(self, summary):
+        logger.debug(f"Sending summary to user {summary}")
+
+    async def _generate_summary(self, occasion: Occasion):
+        model = ChatOpenAI(model='gpt-3.5-turbo')
+        prompt = PromptTemplate(
+            input_variables=["occasion_label" "occasion_date", "custom_input"],
+            template=LLM_PROMPT
+        )
+        output_parser = StrOutputParser()
+
+        chain = prompt | model | output_parser
+
+        return await chain.ainvoke({
+            "occasion_label": occasion.label,
+            "occasion_date": occasion.date,
+            "custom_input": occasion.custom_input
+        })
 
     def _validate_occasion(self, db: Session, occasion: Occasion):
         current_time = datetime.now(timezone.utc)
