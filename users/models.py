@@ -1,5 +1,4 @@
-from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from db.database import Base
@@ -13,3 +12,4 @@ class User(Base):
     email = Column(String, index=True)
     password = Column(String)
     occasions = relationship("Occasion", back_populates="user")
+    is_superuser = Column(Boolean, default=False)
