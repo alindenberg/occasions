@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 
 class BaseUser(BaseModel):
@@ -13,3 +14,4 @@ class UserIn(BaseUser):
 class UserOut(BaseUser):
     id: int
     created: datetime
+    is_superuser: Optional[bool] = None

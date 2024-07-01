@@ -37,7 +37,6 @@ class UserService:
 
     async def _validate_unique_email(self, db, email):
         user = db.query(User).filter(User.email == email).count()
-        print("user ", user)
         if user:
             raise ValueError("Email already registered")
 
