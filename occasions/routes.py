@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @router.post("/occasions/")
 async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
+        logger.info("creating occasion with ", occasion)
         OccasionService().create_occasion(db, user=user, **occasion.model_dump())
         return {"message": "Occasion created successfully"}
     except ValueError as e:
@@ -38,7 +39,7 @@ async def get_occasion(occasion_id: int, db: Session = Depends(get_db)):
 
 @router.put("/occasions/{occasion_id}")
 async def update_occasion(occasion_id: int, occasion: OccasionIn, db: Session = Depends(get_db)):
-    print("updating occasion with ", **occasion.model_dump())
+    logger.info("updating occasion with ", occasion)
     OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
     return {"message": "Occasion updated successfully"}
 
