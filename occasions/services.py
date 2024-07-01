@@ -42,6 +42,8 @@ class OccasionService:
     def update_occasion(self, db: Session, occasion_id: int, **kwargs):
         occasion = db.query(Occasion).get(occasion_id)
         for key, value in kwargs.items():
+            if key == "date":
+                value = value.isoformat() if value else None
             setattr(occasion, key, value)
         db.commit()
         db.refresh(occasion)
