@@ -38,6 +38,7 @@ async def get_occasion(occasion_id: int, db: Session = Depends(get_db)):
 
 @router.put("/occasions/{occasion_id}")
 async def update_occasion(occasion_id: int, occasion: OccasionIn, db: Session = Depends(get_db)):
+    print("updating occasion with ", **occasion.model_dump())
     OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
     return {"message": "Occasion updated successfully"}
 
