@@ -1,3 +1,4 @@
+import os
 import jwt
 import logging
 
@@ -5,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 
-from users.constants import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from users.exceptions import UserNotFoundException
 from users.models import User
 from users.types import UserIn
@@ -50,7 +50,7 @@ class UserAuthenticationService(UserService):
             user = await self.authenticate_user(db, form_data.username, form_data.password)
             if not user:
                 raise UserNotFoundException("Invalid username of password")
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token_expires = timedelta(minutes=int(os.getenv("JWT_EXPIRE_MINUTES", 30)))
             access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
             return access_token
         except Exception as e:
@@ -63,7 +63,7 @@ class UserAuthenticationService(UserService):
             user = await self.create_user(db, user)
             access_token = self.create_access_token(
                 data={"sub": user.email},
-                expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                expires_delta=timedelta(minutes=int(os.getenv('JWT_EXPIRE_MINUTES', 30)))
             )
             return access_token
         except Exception as e:
@@ -85,7 +85,7 @@ class UserAuthenticationService(UserService):
         else:
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(to_encode, os.getenv("JWT_SALT"), algorithm=os.getenv("JWT_ALGORITHM"))
         return encoded_jwt
 
     def verify_password(self, plain_password, hashed_password):
