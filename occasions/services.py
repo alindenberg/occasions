@@ -1,5 +1,7 @@
+import os
 import asyncio
 import logging
+import requests
 
 from datetime import datetime, timezone
 from langchain_core.output_parsers import StrOutputParser
@@ -67,20 +69,29 @@ class OccasionService:
             occasion.date_processed = datetime.now(timezone.utc).isoformat()
             db.commit()
 
-            asyncio.create_task(self._send_summary(summary))
+            asyncio.createtask(self._send_summary(occasion.user.email, occasion.label, summary))
 
             logger.info(f"Occasion {occasion.id} processed successfully")
         except Exception as exc:
             logger.error(f"Error processing occasion {occasion.id}. {exc}")
             db.rollback()
 
-    async def _send_summary(self, summary):
-        logger.debug(f"Sending summary to user {summary}")
+    async def _send_summary(self, recipient_email, occasion_label, summary):
+        res = requests.post(
+            "https://api.mailgun.net/v3/mg.occasionalert.me/messages",
+            auth=("api", os.getenv('MAILGUN_API_KEY')),
+            data={
+                "from": "Occasion Alerts <mailgun@mg.occasionalert.me>",
+                "to": [recipient_email],
+                "subject": f"Occasion Alerts - Summary for {occasion_label}",
+                "text": summary
+            })
+        print("res ", res)
 
     async def _generate_summary(self, occasion: Occasion):
         model = ChatOpenAI(model='gpt-3.5-turbo')
         prompt = PromptTemplate(
-            input_variables=["occasion_label" "occasion_date", "custom_input"],
+            input_variables=["occasion_label" "occasion_date", "occasion_type", "custom_input"],
             template=LLM_PROMPT
         )
         output_parser = StrOutputParser()
