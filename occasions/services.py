@@ -69,7 +69,7 @@ class OccasionService:
             occasion.date_processed = datetime.now(timezone.utc).isoformat()
             db.commit()
 
-            asyncio.createtask(self._send_summary(occasion.user.email, occasion.label, summary))
+            asyncio.create_task(self._send_summary(occasion.user.email, occasion.label, summary))
 
             logger.info(f"Occasion {occasion.id} processed successfully")
         except Exception as exc:

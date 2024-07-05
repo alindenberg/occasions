@@ -2,10 +2,10 @@ import asyncio
 import logging
 
 from datetime import datetime, timezone
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
-from db.database import SessionLocal
+from db.database import get_db
 from occasions.models import Occasion
 from occasions.services import OccasionService
 
@@ -19,8 +19,7 @@ async def repeat_func(seconds: int, func):
         await asyncio.sleep(seconds)
 
 
-async def process_ocassions():
-    db: Session = SessionLocal()
+async def process_ocassions(db: Session):
     service = OccasionService()
     occasions = db.query(Occasion).filter(
         Occasion.date_processed.is_(None),
@@ -37,10 +36,11 @@ class OccasionTasks():
         asyncio.create_task(self.schedule_task(process_ocassions))
 
     async def schedule_task(self, func):
+        db = next(get_db())
         # Ensure top of hour run
         # now = datetime.now(timezone.utc)
         # if now.minute != 0 or now.second != 0:
             # wait_seconds = 60*(60 - now.minute) - now.second
             # await asyncio.sleep(wait_seconds)
         # await repeat_func(60*60, func)
-        await repeat_func(60, func)
+        await repeat_func(60, lambda: func(db))
