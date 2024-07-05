@@ -5,6 +5,6 @@ the type of occasion, the label of it, the date of the occasion, and a custom in
 more details. You need to generate a message that is appropriate for the occasion that incorporates
 the details and from the custom input.
 
-The occasion is a {occasion_label} happening on {occasion_date}. The user has provided the following
+The occasion is a {occasion_type}, labeled {occasion_label}, happening on {occasion_date}. The user has provided the following
 custom input: {custom_input}. Generate a message for the user to send to their loved one.
 """
