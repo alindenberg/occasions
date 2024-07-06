@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from datetime import datetime, timezone
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from sqlalchemy.orm import Session
 
 from db.database import get_db
