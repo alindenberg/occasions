@@ -101,6 +101,7 @@ class OccasionService:
         return await chain.ainvoke({
             "occasion_label": occasion.label,
             "occasion_date": occasion.date,
+            "occasion_type": occasion.type,
             "custom_input": occasion.custom_input
         })
 
