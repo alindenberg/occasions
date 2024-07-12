@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 class OccasionService:
     def create_occasion(self, db: Session, user: User, **kwargs):
         try:
+            if not (hasattr(user, 'credits') and user.credits.credits):
+                raise ValueError("User has no credits to create an occasion")
+
             kwargs["date"] = kwargs["date"].isoformat() if kwargs.get("date") else None
             kwargs["created"] = datetime.now(timezone.utc).isoformat()
             kwargs["user_id"] = user.id
@@ -30,6 +33,13 @@ class OccasionService:
             db.add(occasion)
             db.commit()
             db.refresh(occasion)
+
+            try:
+                user.credits.credits -= 1
+                db.commit()
+            except Exception as exc:
+                logger.error(f"Error updating credits for user {user.id}. {exc}")
+
             return occasion
         except (ValueError, Exception):
             db.rollback()
@@ -52,7 +62,11 @@ class OccasionService:
         return occasion
 
     def delete_occasion(self, db: Session, occasion_id: int):
-        db.query(Occasion).filter(Occasion.id == occasion_id).delete()
+        # TODO: validate occasion isnt processed yet
+        # TODO: add back a user credi't
+        occasion = db.query(Occasion).get(occasion_id)
+        occasion.user.add_credits(1)
+        db.delete(occasion)
         db.commit()
         return {"message": "Occasion deleted successfully"}
 

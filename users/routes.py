@@ -1,10 +1,11 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Annotated
 from db.database import get_db
 
+from stripe_utils.services import StripeService
 from users.exceptions import UserNotFoundException
 from users.models import User
 from users.services import UserService, UserAuthenticationService
@@ -47,3 +48,34 @@ async def signup(user: UserIn, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"An error occurred while signing up - {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while signing up")
+
+
+@router.post("/stripe-webhook")
+async def stripe_webhook(
+        stripe_signature: Annotated[str, Header(alias="stripe-signature")],
+        request: Request,
+        db: Session = Depends(get_db)):
+    try:
+        payload = await request.body()
+        StripeService().process_webhook_event(db, payload, stripe_signature)
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"An error occurred while processing the Stripe webhook: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while processing the webhook")
+
+
+from pydantic import BaseModel
+
+
+class CheckoutRequest(BaseModel):
+    quantity: int
+
+
+@router.post("/checkout")
+async def checkout(user: Annotated[User, Depends(get_current_user)], request: CheckoutRequest):
+    try:
+        session = StripeService().create_checkout_session(user, request.quantity)
+        return {"client_secret": session.client_secret}
+    except Exception as e:
+        logger.error(f"An error occurred while creating checkout session: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while creating checkout session")

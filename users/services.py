@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 
 from users.exceptions import UserNotFoundException
-from users.models import User
+from users.models import User, Credits
 from users.types import UserIn
 
 logger = logging.getLogger(__name__)
@@ -23,11 +23,14 @@ class UserService:
         )
         db.add(db_user)
         db.commit()
+
+        # Credits module
+        credits = Credits(user_id=db_user.id, credits=3)
+        db.add(credits)
+        db.commit()
+
         db.refresh(db_user)
         return db_user
-
-    async def get_user(self, db, user_id):
-        return db.query(User).get(user_id)
 
     async def get_user_by_email(self, db, email):
         return db.query(User).filter(User.email == email).first()

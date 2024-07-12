@@ -6,3 +6,4 @@ langchain-openai==0.1.12
 langchain-core==0.2.10
 alembic==1.13.1
 psycopg2-binary==2.9.9
+stripe==10.2.0
