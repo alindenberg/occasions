@@ -1,14 +1,15 @@
 import logging
-import os
 import stripe
 
+from config import get_settings
 from db.database import get_db
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
-stripe.api_key = os.getenv('STRIPE_API_KEY')
+stripe.api_key = settings.STRIPE_API_KEY
 
 
 class StripeService:
@@ -47,7 +48,7 @@ class StripeService:
 
     def _get_event(self, payload: str, stripe_signature: str):
         try:
-            return stripe.Webhook.construct_event(payload, stripe_signature, os.getenv('STRIPE_WEBHOOK_SECRET'))
+            return stripe.Webhook.construct_event(payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET)
         except ValueError as e:
             logger.error(f"Invalid payload for stripe webhook. Error: {e}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid payload")
@@ -74,11 +75,11 @@ class StripeService:
             customer=user.get_stripe_customer().stripe_customer_id,
             line_items=[
                 {
-                    'price': os.getenv('STRIPE_PRICE_ID', None),
+                    'price': settings.STRIPE_PRICE_ID,
                     'quantity': quantity
                 },
             ],
             mode='payment',
-            return_url=f"{os.getenv('NEXT_PUBLIC_URL', 'http://localhost:3000')}/complete" + "?session_id={CHECKOUT_SESSION_ID}",
+            return_url=f"{settings.NEXT_PUBLIC_URL}/complete" + "?session_id={CHECKOUT_SESSION_ID}",
             automatic_tax={'enabled': False}
         )

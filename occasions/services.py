@@ -1,4 +1,3 @@
-import os
 import asyncio
 import logging
 import requests
@@ -10,12 +9,14 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
+from config import get_settings
 from occasions.constants import LLM_PROMPT
 from occasions.models import Occasion
 from users.models import User
 
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 class OccasionService:
@@ -93,7 +94,7 @@ class OccasionService:
     async def _send_summary(self, recipient_email, occasion_label, summary):
         res = requests.post(
             "https://api.mailgun.net/v3/mg.occasionalert.me/messages",
-            auth=("api", os.getenv('MAILGUN_API_KEY')),
+            auth=("api", settings.MAILGUN_API_KEY),
             data={
                 "from": "Occasion Alerts <mailgun@mg.occasionalert.me>",
                 "to": [recipient_email],

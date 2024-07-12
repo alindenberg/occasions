@@ -1,9 +1,10 @@
-import os
+from config import get_settings
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db").replace('postgres://', 'postgresql://')
+settings = get_settings()
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL.replace('postgres://', 'postgresql://')
 
 connect_args = {"check_same_thread": False}
 if SQLALCHEMY_DATABASE_URL and 'postgres' in SQLALCHEMY_DATABASE_URL:

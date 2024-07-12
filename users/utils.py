@@ -1,4 +1,3 @@
-import os
 import jwt
 
 from db.database import get_db
@@ -9,7 +8,10 @@ from passlib.context import CryptContext
 from typing import Annotated
 from sqlalchemy.orm import Session
 
+from config import get_settings
 from users.services import UserService
+
+settings = get_settings()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,8 +24,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        jwt_salt = os.getenv("JWT_SALT")
-        jwt_algo = os.getenv("JWT_ALGORITHM")
+        jwt_salt = settings.JWT_SALT
+        jwt_algo = settings.JWT_ALGORITHM
         payload = jwt.decode(token, jwt_salt, algorithms=[jwt_algo])
         email: str = payload.get("sub")
         if email is None:

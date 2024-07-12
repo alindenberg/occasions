@@ -1,4 +1,4 @@
-import os
+from config import get_settings
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -73,7 +73,8 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-url = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db").replace('postgres://', 'postgresql://')
+settings = get_settings()
+url = settings.DATABASE_URL.replace('postgres://', 'postgresql://')
 config.set_main_option('sqlalchemy.url', url)
 if context.is_offline_mode():
     run_migrations_offline()
