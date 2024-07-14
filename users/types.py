@@ -27,7 +27,7 @@ class UserOut(BaseUser):
     @field_serializer('credits')
     def credits_serializer(self, credits, _info):
         try:
-            return credits.credits
+            return credits.credits if credits else 0
         except Exception as exc:
             logger.error(f"An error occurred while serializing credits: {exc}")
             return 0
