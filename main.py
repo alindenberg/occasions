@@ -1,7 +1,6 @@
 import logging
 from fastapi import FastAPI
 
-from db.database import engine
 from occasions import routes as occasion_routes
 from occasions.tasks import OccasionTasks as occasion_tasks
 

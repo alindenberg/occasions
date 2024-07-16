@@ -17,6 +17,7 @@ class User(Base):
     occasions = relationship("Occasion", back_populates="user")
     credits = relationship("Credits", uselist=False, back_populates="user")
     stripe_customer = relationship("StripeCustomer", uselist=False, back_populates="user")
+    password_resets = relationship("PasswordReset", back_populates="user")
     is_superuser = Column(Boolean, default=False)
 
     def get_stripe_customer(self):
@@ -47,3 +48,14 @@ class Credits(Base):
     user_id = Column(Integer, ForeignKey('users.id'), index=True, nullable=False)
     user = relationship("User", back_populates="credits")
     credits = Column(Integer, default=0)
+
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    reset_hash = Column(String, unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User", back_populates="password_resets")

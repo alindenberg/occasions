@@ -1,13 +1,17 @@
 import jwt
+import hashlib
 import logging
 
 from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
+from pydantic import EmailStr
+from sqlalchemy.orm import Session
 
 from config import get_settings
 from users.exceptions import UserNotFoundException
-from users.models import User, Credits
+from users.models import User, Credits, PasswordReset
 from users.types import UserIn
 
 logger = logging.getLogger(__name__)
@@ -97,3 +101,66 @@ class UserAuthenticationService(UserService):
 
     def get_password_hash(self, password):
         return self.pwd_context.hash(password)
+
+    def generate_reset_hash(self, db: Session, user: User):
+        # Generate a unique hash
+        reset_hash = hashlib.sha256(f"{user.email}{datetime.utcnow().isoformat()}".encode()).hexdigest()
+        expiration_time = datetime.utcnow() + timedelta(minutes=15)
+
+        # Store the hash and expiration time in the database
+        password_reset = PasswordReset(user_id=user.id, reset_hash=reset_hash, expires_at=expiration_time)
+        db.add(password_reset)
+        db.commit()
+
+        # Send email with the reset link
+        reset_link = f"{settings.NEXT_PUBLIC_URL}/reset-password?hash={reset_hash}"
+        self.send_reset_email(user.email, reset_link)
+
+        logger.info(f"Password reset hash generated and email sent to: {user.email}")
+        return {"msg": "Password reset email sent"}
+
+    def send_reset_email(self, email: EmailStr, reset_link: str):
+        logger.info(f"Sending password reset email to: {email} with link {reset_link}")
+        return
+        # message = MessageSchema(
+        #     subject="Password Reset Request",
+        #     recipients=[email],
+        #     body=f"Click the link to reset your password: {reset_link}",
+        #     subtype="html"
+        # )
+        # fm = FastMail(settings.MAIL_CONFIG)
+        # fm.send_message(message)
+
+    def verify_password_reset_hash(self, db, reset_hash: str):
+        from users.models import PasswordReset
+
+        # Retrieve the hash from the database
+        password_reset = db \
+            .query(PasswordReset) \
+            .filter(PasswordReset.reset_hash == reset_hash) \
+            .first()
+        if not password_reset or password_reset.expires_at < datetime.utcnow():
+            logger.error("Invalid or expired password reset hash")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired password reset hash")
+
+        return password_reset.user_id
+
+    def reset_password(self, db: Session, reset_hash: str, new_password: str):
+        user_id = self.verify_password_reset_hash(db, reset_hash)
+
+        # Hash the new password
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        hashed_password = pwd_context.hash(new_password)
+
+        # Update the user's password in the database
+        user = db.query(User).filter(User.id == user_id).first()
+        logger.info(f"Resetting password for user: {user.id} with new hashed password {hashed_password}")
+        setattr(user, "password", hashed_password)
+        db.commit()
+        db.refresh(user)
+
+        db.query(PasswordReset).filter(PasswordReset.reset_hash == reset_hash).delete()
+        db.commit()
+
+        logger.info(f"Password reset successfully for user: {user.id}")
+        return {"msg": "Password reset successfully"}

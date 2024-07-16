@@ -92,7 +92,7 @@ class OccasionService:
             db.rollback()
 
     async def _send_summary(self, recipient_email, occasion_label, summary):
-        res = requests.post(
+        requests.post(
             "https://api.mailgun.net/v3/mg.occasionalert.me/messages",
             auth=("api", settings.MAILGUN_API_KEY),
             data={
@@ -101,7 +101,6 @@ class OccasionService:
                 "subject": f"Occasion Alerts - Summary for {occasion_label}",
                 "text": summary
             })
-        print("res ", res)
 
     async def _generate_summary(self, occasion: Occasion):
         model = ChatOpenAI(model='gpt-3.5-turbo')

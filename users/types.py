@@ -31,3 +31,16 @@ class UserOut(BaseUser):
         except Exception as exc:
             logger.error(f"An error occurred while serializing credits: {exc}")
             return 0
+
+
+class CheckoutRequest(BaseModel):
+    quantity: int
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordReset(BaseModel):
+    new_password: str
+    reset_hash: str
