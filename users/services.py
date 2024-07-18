@@ -114,7 +114,7 @@ class UserAuthenticationService(UserService):
         db.commit()
 
         # Send email with the reset link
-        reset_link = f"{settings.NEXT_PUBLIC_URL}/reset-password?hash={reset_hash}"
+        reset_link = f"{settings.NEXT_PUBLIC_URL}/account/reset-password?hash={reset_hash}"
         self.send_reset_email(user.email, reset_link)
 
         logger.info(f"Password reset hash generated and email sent to: {user.email}")
@@ -139,7 +139,11 @@ class UserAuthenticationService(UserService):
 
         return password_reset.user_id
 
-    def reset_password(self, db: Session, reset_hash: str, new_password: str):
+    def reset_password(self, db: Session, reset_hash: str, new_password: str, confirm_new_password: str):
+        if new_password != confirm_new_password:
+            logger.error("Passwords do not match")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
+
         user_id = self.verify_password_reset_hash(db, reset_hash)
 
         # Hash the new password
@@ -148,7 +152,6 @@ class UserAuthenticationService(UserService):
 
         # Update the user's password in the database
         user = db.query(User).filter(User.id == user_id).first()
-        logger.info(f"Resetting password for user: {user.id} with new hashed password {hashed_password}")
         setattr(user, "password", hashed_password)
         db.commit()
         db.refresh(user)

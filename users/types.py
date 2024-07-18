@@ -43,4 +43,5 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordReset(BaseModel):
     new_password: str
+    confirm_new_password: str
     reset_hash: str

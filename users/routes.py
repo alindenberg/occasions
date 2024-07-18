@@ -86,4 +86,4 @@ async def request_password_reset(request: PasswordResetRequest, db: Session = De
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 async def reset_password(request: PasswordReset, db: Session = Depends(get_db)):
-    return UserAuthenticationService().reset_password(db, request.reset_hash, request.new_password)
+    return UserAuthenticationService().reset_password(db, request.reset_hash, request.new_password, request.confirm_new_password)
