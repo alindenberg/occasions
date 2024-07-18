@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import requests
 
 from datetime import datetime, timezone
 from langchain_core.output_parsers import StrOutputParser
@@ -10,6 +9,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from config import get_settings
+from mail.services import MailService
 from occasions.constants import LLM_PROMPT
 from occasions.models import Occasion
 from users.models import User
@@ -92,15 +92,8 @@ class OccasionService:
             db.rollback()
 
     async def _send_summary(self, recipient_email, occasion_label, summary):
-        requests.post(
-            "https://api.mailgun.net/v3/mg.occasionalert.me/messages",
-            auth=("api", settings.MAILGUN_API_KEY),
-            data={
-                "from": "Occasion Alerts <mailgun@mg.occasionalert.me>",
-                "to": [recipient_email],
-                "subject": f"Occasion Alerts - Summary for {occasion_label}",
-                "text": summary
-            })
+        subject = f"Occasion Alerts - Summary for {occasion_label}"
+        MailService().send_email(recipient_email, subject, body=summary)
 
     async def _generate_summary(self, occasion: Occasion):
         model = ChatOpenAI(model='gpt-3.5-turbo')

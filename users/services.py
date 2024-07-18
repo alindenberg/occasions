@@ -10,6 +10,7 @@ from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from config import get_settings
+from mail.services import MailService
 from users.exceptions import UserNotFoundException
 from users.models import User, Credits, PasswordReset
 from users.types import UserIn
@@ -120,16 +121,9 @@ class UserAuthenticationService(UserService):
         return {"msg": "Password reset email sent"}
 
     def send_reset_email(self, email: EmailStr, reset_link: str):
-        logger.info(f"Sending password reset email to: {email} with link {reset_link}")
-        return
-        # message = MessageSchema(
-        #     subject="Password Reset Request",
-        #     recipients=[email],
-        #     body=f"Click the link to reset your password: {reset_link}",
-        #     subtype="html"
-        # )
-        # fm = FastMail(settings.MAIL_CONFIG)
-        # fm.send_message(message)
+        subject = "Password Reset"
+        body = f"Reset your password using the following link. The link will expire in 15 minutes. Link: {reset_link}"
+        MailService().send_email(email, subject, body)
 
     def verify_password_reset_hash(self, db, reset_hash: str):
         from users.models import PasswordReset
