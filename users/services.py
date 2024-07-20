@@ -45,7 +45,11 @@ class UserService:
         return db.query(User).all()
 
     async def _validate_unique_email(self, db, email):
-        user = db.query(User).filter(User.email == email).count()
+        # Normalize the email by removing any part after a '+' sign before the '@' symbol
+        local_part, domain_part = email.split('@')
+        cleaned_email = local_part.split('+')[0] + '@' + domain_part
+
+        user = db.query(User).filter(User.email == cleaned_email).count()
         if user:
             raise ValueError("Email already registered")
 
