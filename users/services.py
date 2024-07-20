@@ -31,7 +31,7 @@ class UserService:
         db.commit()
 
         # Credits module
-        credits = Credits(user_id=db_user.id, credits=3)
+        credits = Credits(user_id=db_user.id, credits=2)
         db.add(credits)
         db.commit()
 
