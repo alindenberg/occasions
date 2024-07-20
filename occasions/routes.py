@@ -28,7 +28,11 @@ async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current
 
 @router.get("/occasions/", response_model=List[OccasionOut])
 async def get_occasions(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return OccasionService().get_occasions_for_user(db, user.id)
+    try:
+        return OccasionService().get_occasions_for_user(db, user.id)
+    except Exception as e:
+        logger.error(f"An error occurred while getting the occasions - {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while getting the occasions")
 
 
 @router.get("/occasions/{occasion_id}", response_model=OccasionOut)
@@ -45,11 +49,19 @@ async def get_occasion(occasion_id: int, db: Session = Depends(get_db), user: Us
 
 @router.put("/occasions/{occasion_id}")
 async def update_occasion(occasion_id: int, occasion: OccasionIn, db: Session = Depends(get_db)):
-    OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
-    return {"message": "Occasion updated successfully"}
+    try:
+        OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
+        return {"message": "Occasion updated successfully"}
+    except Exception as e:
+        logger.error(f"An error occurred while updating the occasion - {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while updating the occasion")
 
 
 @router.delete("/occasions/{occasion_id}")
 async def delete_occasion(occasion_id: int, db: Session = Depends(get_db)):
-    OccasionService().delete_occasion(db, occasion_id)
-    return {"message": "Occasion deleted successfully"}
+    try:
+        OccasionService().delete_occasion(db, occasion_id)
+        return {"message": "Occasion deleted successfully"}
+    except Exception as e:
+        logger.error(f"An error occurred while deleting the occasion - {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while deleting the occasion")
