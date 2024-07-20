@@ -46,11 +46,18 @@ class OccasionService:
             db.rollback()
             raise
 
-    def get_occasions_for_user(self, user_id: int, db: Session):
+    def get_occasions_for_user(self, db: Session, user_id: int):
         return db.query(Occasion).filter(Occasion.user_id == user_id).all()
 
-    def get_occasion(self, db: Session, occasion_id: int):
-        return db.query(Occasion).get(occasion_id)
+    def get_occasion(self, db: Session, occasion_id: int, user_id: int):
+        occasion = db.query(Occasion).filter(
+            Occasion.id == occasion_id,
+            Occasion.user_id == user_id
+        ).first()
+
+        if not occasion:
+            raise ValueError("Occasion not found")
+        return occasion
 
     def update_occasion(self, db: Session, occasion_id: int, **kwargs):
         occasion = db.query(Occasion).get(occasion_id)
