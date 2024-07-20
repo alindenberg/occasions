@@ -96,7 +96,7 @@ class OccasionService:
         MailService().send_email(recipient_email, subject, body=summary)
 
     async def _generate_summary(self, occasion: Occasion):
-        model = ChatOpenAI(model='gpt-3.5-turbo')
+        model = ChatOpenAI(model='gpt-4o-mini')
         prompt = PromptTemplate(
             input_variables=["occasion_label" "occasion_date", "occasion_type", "custom_input"],
             template=LLM_PROMPT
