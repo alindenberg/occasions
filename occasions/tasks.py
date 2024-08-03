@@ -37,10 +37,4 @@ class OccasionTasks():
 
     async def schedule_task(self, func):
         db = next(get_db())
-        # Ensure top of hour run
-        # now = datetime.now(timezone.utc)
-        # if now.minute != 0 or now.second != 0:
-            # wait_seconds = 60*(60 - now.minute) - now.second
-            # await asyncio.sleep(wait_seconds)
-        # await repeat_func(60*60, func)
         await repeat_func(60, lambda: func(db))
