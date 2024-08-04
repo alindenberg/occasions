@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 
 from config import get_settings
 from mail.services import MailService
+
 from occasions.constants import LLM_PROMPT
 from occasions.models import Occasion
+from occasions.types import OccasionTone, OccasionType
 from users.models import User
 
 
@@ -65,6 +67,7 @@ class OccasionService:
             if key == "date":
                 value = value.isoformat() if value else None
             setattr(occasion, key, value)
+        self._validate_occasion(db, occasion)
         db.commit()
         db.refresh(occasion)
         return occasion
@@ -121,13 +124,19 @@ class OccasionService:
         })
 
     def _validate_occasion(self, db: Session, occasion: Occasion):
-        current_time = datetime.now(timezone.utc)
-        existing_occasions = db.query(Occasion).filter(
-            and_(
-                Occasion.user_id == occasion.user_id,
-                Occasion.id != occasion.id,
-                Occasion.date >= current_time.isoformat()
-            )
-        ).count()
-        if existing_occasions >= 3:
-            raise ValueError("User can only have 3 upcoming occasions")
+        self._validate_occasion_tone(occasion)
+        self._validate_occasion_type(occasion)
+
+    def _validate_occasion_tone(self, occasion: Occasion):
+        for tone in OccasionTone:
+            if occasion.tone == tone.value:
+                return
+        raise ValueError("Invalid occasion tone")
+
+    def _validate_occasion_type(self, occasion: Occasion):
+        print(f"passed occasion type is {occasion.type}")
+        for occasion_type in OccasionType:
+            print("occasion_type", occasion_type)
+            if occasion.type == occasion_type.value:
+                return
+        raise ValueError("Invalid occasion type")

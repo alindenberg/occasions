@@ -24,7 +24,7 @@ class OccasionType(str, Enum):
 class OccasionIn(BaseModel):
     label: str
     type: OccasionType
-    tone: OccasionTone = OccasionTone.NORMAL
+    tone: OccasionTone
     date: datetime
     custom_input: Optional[str]
 
