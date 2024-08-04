@@ -105,7 +105,7 @@ class OccasionService:
     async def _generate_summary(self, occasion: Occasion):
         model = ChatOpenAI(model='gpt-4o-mini')
         prompt = PromptTemplate(
-            input_variables=["occasion_label" "occasion_date", "occasion_type", "custom_input"],
+            input_variables=["occasion_label" "occasion_date", "occasion_tone", "occasion_type", "custom_input"],
             template=LLM_PROMPT
         )
         output_parser = StrOutputParser()
@@ -116,6 +116,7 @@ class OccasionService:
             "occasion_label": occasion.label,
             "occasion_date": occasion.date,
             "occasion_type": occasion.type,
+            "occasion_tone": occasion.tone,
             "custom_input": occasion.custom_input
         })
 
