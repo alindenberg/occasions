@@ -5,3 +5,4 @@ sql_app.db
 
 __pycache__/
 **.pyc
+create_commit.sh
