@@ -1,5 +1,3 @@
-import jwt
-
 from db.database import get_db
 from jwt import InvalidTokenError
 from fastapi import HTTPException, status, Depends
@@ -10,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from config import get_settings
 from users.services import UserService
+from users.google_auth import verify_google_token
 
 settings = get_settings()
 
@@ -24,12 +23,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Se
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        jwt_salt = settings.JWT_SALT
-        jwt_algo = settings.JWT_ALGORITHM
-        payload = jwt.decode(token, jwt_salt, algorithms=[jwt_algo])
-        email: str = payload.get("sub")
-        if email is None:
+        user_dict = verify_google_token(token)
+        if user_dict is None:
             raise credentials_exception
+        email = user_dict.get('email')
+        if not email:
+            raise credentials_exception
+
     except InvalidTokenError:
         raise credentials_exception
     user = await UserService().get_user_by_email(db, email)

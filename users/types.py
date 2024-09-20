@@ -11,11 +11,7 @@ class BaseUser(BaseModel):
 
 
 class UserIn(BaseUser):
-    password: str
-
-
-# class CreditOut(BaseModel):
-#     credits: int
+    google_id: str
 
 
 class UserOut(BaseUser):

@@ -134,9 +134,7 @@ class OccasionService:
         raise ValueError("Invalid occasion tone")
 
     def _validate_occasion_type(self, occasion: Occasion):
-        print(f"passed occasion type is {occasion.type}")
         for occasion_type in OccasionType:
-            print("occasion_type", occasion_type)
             if occasion.type == occasion_type.value:
                 return
         raise ValueError("Invalid occasion type")

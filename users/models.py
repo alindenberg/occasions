@@ -13,7 +13,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     created = Column(DateTime, index=True, nullable=False)
     email = Column(String, index=True)
-    password = Column(String)
+    google_id = Column(String, unique=True, index=True)
     occasions = relationship("Occasion", back_populates="user")
     credits = relationship("Credits", uselist=False, back_populates="user")
     stripe_customer = relationship("StripeCustomer", uselist=False, back_populates="user")

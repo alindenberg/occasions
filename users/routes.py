@@ -29,28 +29,16 @@ async def users(current_user: Annotated[User, Depends(get_current_user)], db: Se
     return await UserService().get_all_users(db)
 
 
-@router.post("/login")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session = Depends(get_db)):
+@router.post("/google-auth")
+async def google_auth(token: str, db: Session = Depends(get_db)):
     try:
-        token = await UserAuthenticationService().login(db, form_data)
-        return {"access_token": token, "token_type": "bearer"}
-    except UserNotFoundException:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        access_token = await UserAuthenticationService().google_auth(db, token)
+        return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        logger.error(f"An error occurred while logging in: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while logging in")
-
-
-@router.post("/signup")
-async def signup(user: UserIn, db: Session = Depends(get_db)):
-    try:
-        token = await UserAuthenticationService().signup(db, user)
-        return {"access_token": token, "token_type": "bearer"}
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        logger.error(f"An error occurred while signing up - {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while signing up")
+        logger.error(f"An error occurred during Google authentication - {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred during Google authentication")
 
 
 @router.post("/stripe-webhook")

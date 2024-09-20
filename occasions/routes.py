@@ -23,7 +23,7 @@ async def create_occasion(occasion: OccasionIn, user: User = Depends(get_current
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"An error occurred while creating the occasion - {e}")
-        raise HTTPException(status_code=500, detail="An error occurred while creating the occasion")
+        raise HTTPException(status_code=500, detail=f"An error occurred while creating the occasion: {str(e)}")
 
 
 @router.get("/occasions/", response_model=List[OccasionOut])
