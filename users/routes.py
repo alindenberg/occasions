@@ -29,18 +29,6 @@ async def users(current_user: Annotated[User, Depends(get_current_user)], db: Se
     return await UserService().get_all_users(db)
 
 
-@router.post("/google-auth")
-async def google_auth(token: str, db: Session = Depends(get_db)):
-    try:
-        access_token = await UserAuthenticationService().google_auth(db, token)
-        return {"access_token": access_token, "token_type": "bearer"}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        logger.error(f"An error occurred during Google authentication - {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred during Google authentication")
-
-
 @router.post("/stripe-webhook")
 async def stripe_webhook(
         stripe_signature: Annotated[str, Header(alias="stripe-signature")],
