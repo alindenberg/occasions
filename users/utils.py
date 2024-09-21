@@ -14,7 +14,6 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-    print("token is ", token)
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

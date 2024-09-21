@@ -63,6 +63,7 @@ class UserAuthenticationService(UserService):
             user = await self.authenticate_user(db, form_data.username, form_data.password)
             if not user:
                 raise UserNotFoundException("Invalid username or password")
+            print("user is LOGGING IN ")
             access_token_expires = timedelta(minutes=settings.JWT_EXP_MINUTES)
             access_token = self.create_access_token(data={"sub": user.email}, expires_delta=access_token_expires)
             return access_token
