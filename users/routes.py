@@ -1,15 +1,13 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import Annotated
 from db.database import get_db
 
 from stripe_utils.services import StripeService
-from users.exceptions import UserNotFoundException
 from users.models import User
-from users.services import UserService, UserAuthenticationService
-from users.types import UserIn, UserOut, CheckoutRequest, PasswordResetRequest, PasswordReset
+from users.services import UserService
+from users.types import UserIn, UserOut, CheckoutRequest
 from users.utils import get_current_user
 
 router = APIRouter()
@@ -27,6 +25,18 @@ async def users(current_user: Annotated[User, Depends(get_current_user)], db: Se
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
     return await UserService().get_all_users(db)
+
+
+@router.post("/login")
+async def login(user: UserIn, db: Session = Depends(get_db)):
+    from users.services import UserAuthenticationService
+    try:
+        logger.info('logging in 1.1')
+        await UserAuthenticationService().login(db, user)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"An error occurred while logging in: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while logging in")
 
 
 @router.post("/stripe-webhook")

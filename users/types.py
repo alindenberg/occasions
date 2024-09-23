@@ -12,6 +12,7 @@ class BaseUser(BaseModel):
 
 class UserIn(BaseUser):
     google_id: str
+    email: EmailStr
 
 
 class UserOut(BaseUser):
