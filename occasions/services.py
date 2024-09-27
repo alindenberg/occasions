@@ -38,6 +38,8 @@ class OccasionService:
             db.refresh(occasion)
 
             try:
+                print(user.credits.credits)
+                print(user.credits.credits - 1)
                 user.credits.credits -= 1
                 db.commit()
             except Exception as exc:

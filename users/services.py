@@ -1,18 +1,9 @@
-import jwt
-import hashlib
 import logging
 
-from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
-
+from datetime import datetime, timezone
 from config import get_settings
-from mail.services import MailService
-from users.exceptions import UserNotFoundException
-from users.models import User, Credits, PasswordReset
+from users.models import User, Credits, Feedback
 from users.types import UserIn
 
 logger = logging.getLogger(__name__)
@@ -52,6 +43,13 @@ class UserService:
         user = db.query(User).filter(User.email == cleaned_email).count()
         if user:
             raise ValueError("Email already registered")
+
+    async def create_feedback(self, db: Session, feedback: str, user: User = None):
+        db_feedback = Feedback(feedback=feedback, user_id=user.id if user else None)
+        db.add(db_feedback)
+        db.commit()
+        db.refresh(db_feedback)
+        return db_feedback
 
 
 class UserAuthenticationService(UserService):

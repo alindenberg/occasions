@@ -1,13 +1,11 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
-from typing import Annotated
+from typing import Annotated, Optional
 from db.database import get_db
-
-from stripe_utils.services import StripeService
 from users.models import User
 from users.services import UserService
-from users.types import UserIn, UserOut, CheckoutRequest
+from users.types import UserIn, UserOut, CheckoutRequest, FeedbackRequest
 from users.utils import get_current_user
 
 router = APIRouter()
@@ -31,7 +29,6 @@ async def users(current_user: Annotated[User, Depends(get_current_user)], db: Se
 async def login(user: UserIn, db: Session = Depends(get_db)):
     from users.services import UserAuthenticationService
     try:
-        logger.info('logging in 1.1')
         await UserAuthenticationService().login(db, user)
         return {"ok": True}
     except Exception as e:
@@ -61,3 +58,20 @@ async def checkout(user: Annotated[User, Depends(get_current_user)], request: Ch
     except Exception as e:
         logger.error(f"An error occurred while creating checkout session: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while creating checkout session")
+
+
+@router.post("/feedback")
+async def submit_feedback(
+    feedback_request: FeedbackRequest,
+    current_user: Annotated[Optional[User], Depends(get_current_user)] = None,
+    db: Session = Depends(get_db)
+):
+    try:
+        await UserService().create_feedback(db, feedback_request.feedback, current_user)
+        return {"status": "success", "message": "Feedback submitted successfully"}
+    except Exception as e:
+        logger.error(f"An error occurred while submitting feedback: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while submitting feedback"
+        )

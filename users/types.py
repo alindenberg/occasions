@@ -34,11 +34,5 @@ class CheckoutRequest(BaseModel):
     quantity: int
 
 
-class PasswordResetRequest(BaseModel):
-    email: EmailStr
-
-
-class PasswordReset(BaseModel):
-    new_password: str
-    confirm_new_password: str
-    reset_hash: str
+class FeedbackRequest(BaseModel):
+    feedback: str

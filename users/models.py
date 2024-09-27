@@ -1,8 +1,7 @@
-import stripe
-
 from db.database import Base
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from stripe_utils.services import StripeService
 
@@ -17,8 +16,8 @@ class User(Base):
     occasions = relationship("Occasion", back_populates="user")
     credits = relationship("Credits", uselist=False, back_populates="user")
     stripe_customer = relationship("StripeCustomer", uselist=False, back_populates="user")
-    password_resets = relationship("PasswordReset", back_populates="user")
     is_superuser = Column(Boolean, default=False)
+    feedback = relationship("Feedback", back_populates="user")
 
     def get_stripe_customer(self):
         if self.stripe_customer:
@@ -50,12 +49,11 @@ class Credits(Base):
     credits = Column(Integer, default=0)
 
 
-class PasswordReset(Base):
-    __tablename__ = "password_resets"
+class Feedback(Base):
+    __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    reset_hash = Column(String, unique=True, index=True, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-
-    user = relationship("User", back_populates="password_resets")
+    feedback = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user = relationship("User", back_populates="feedback")

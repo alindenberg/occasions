@@ -21,3 +21,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
+def refresh_settings():
+    get_settings.cache_clear()
