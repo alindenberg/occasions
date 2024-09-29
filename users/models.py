@@ -1,7 +1,7 @@
 from db.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from stripe_utils.services import StripeService
 
@@ -14,7 +14,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     created = Column(DateTime, index=True, nullable=False)
-    email = Column(String, index=True)
+    email = Column(String, unique=True, index=True)
     google_id = Column(String, unique=True, index=True)
     occasions = relationship("Occasion", back_populates="user")
     credits = relationship("Credits", uselist=False, back_populates="user")
@@ -22,6 +22,9 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     feedback = relationship("Feedback", back_populates="user")
     hashed_password = Column(String, nullable=True)
+    email_verified = Column(Boolean, default=False)  # New field
+    email_verifications = relationship("EmailVerification", back_populates="user")
+    refresh_token = Column(String, nullable=True)
 
     def get_stripe_customer(self):
         if self.stripe_customer:
@@ -33,9 +36,6 @@ class User(Base):
             self.credits = Credits(user_id=self.id, credits=quantity)
         else:
             self.credits.credits += quantity
-
-    def set_password(self, password):
-        self.hashed_password = pwd_context.hash(password)
 
     def check_password(self, password):
         return pwd_context.verify(password, self.hashed_password)
@@ -67,3 +67,15 @@ class Feedback(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     user = relationship("User", back_populates="feedback")
+
+
+class EmailVerification(Base):
+    __tablename__ = "email_verifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    expires_at = Column(DateTime, default=datetime.now(timezone.utc) + timedelta(days=1))
+
+    user = relationship("User", back_populates="email_verifications")

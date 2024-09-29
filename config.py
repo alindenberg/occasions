@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     STRIPE_PRICE_ID: str
     GOOGLE_CLIENT_ID: str
+    REFRESH_TOKEN_SALT: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
 
 def refresh_settings():
     get_settings.cache_clear()

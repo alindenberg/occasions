@@ -15,3 +15,8 @@ class MailService:
                 "text": body
             }
         )
+
+    def send_verification_email(self, recipient_email, verification_url):
+        subject = "Verify your email"
+        body = f"Click the link to verify your email: {verification_url}"
+        self.send_email(recipient_email, subject, body)

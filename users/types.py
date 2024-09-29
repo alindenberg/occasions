@@ -19,10 +19,15 @@ class UserIn(BaseUser):
     password: str
 
 
+class RefreshTokenReq(BaseModel):
+    refresh_token: str
+
+
 class UserOut(BaseUser):
     id: int
     created: datetime
     is_superuser: Optional[bool] = None
+    is_email_verified: Optional[bool] = None
     credits: Any
 
     @field_serializer('credits')
