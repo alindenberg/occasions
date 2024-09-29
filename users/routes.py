@@ -47,6 +47,17 @@ async def login(user: UserIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while logging in")
 
 
+@router.post("/signup")
+async def signup(user: UserIn, db: Session = Depends(get_db)):
+    from users.services import UserAuthenticationService
+    try:
+        await UserAuthenticationService().signup(db, user)
+        return {"ok": True}
+    except Exception as e:
+        logger.error(f"An error occurred while signing up: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 @router.post("/stripe-webhook")
 async def stripe_webhook(
         stripe_signature: Annotated[str, Header(alias="stripe-signature")],

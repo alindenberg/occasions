@@ -5,9 +5,11 @@ from datetime import datetime, timezone
 from config import get_settings
 from users.models import User, Credits, Feedback
 from users.types import GoogleUserIn, UserIn
+from passlib.context import CryptContext
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class UserService:
@@ -73,4 +75,16 @@ class UserAuthenticationService(UserService):
             raise ValueError("User not found")
         if not db_user.check_password(user.password):
             raise ValueError("Invalid password")
+        return db_user
+
+    async def signup(self, db, user: UserIn):
+        await self._validate_unique_email(db, user.email)
+        db_user = User(
+            created=datetime.now(timezone.utc),
+            email=user.email,
+            hashed_password=pwd_context.hash(user.password)
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
         return db_user
