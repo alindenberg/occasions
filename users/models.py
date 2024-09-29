@@ -2,8 +2,11 @@ from db.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
-
+from passlib.context import CryptContext
 from stripe_utils.services import StripeService
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User(Base):
@@ -18,6 +21,7 @@ class User(Base):
     stripe_customer = relationship("StripeCustomer", uselist=False, back_populates="user")
     is_superuser = Column(Boolean, default=False)
     feedback = relationship("Feedback", back_populates="user")
+    hashed_password = Column(String, nullable=True)
 
     def get_stripe_customer(self):
         if self.stripe_customer:
@@ -29,6 +33,12 @@ class User(Base):
             self.credits = Credits(user_id=self.id, credits=quantity)
         else:
             self.credits.credits += quantity
+
+    def set_password(self, password):
+        self.hashed_password = pwd_context.hash(password)
+
+    def check_password(self, password):
+        return pwd_context.verify(password, self.hashed_password)
 
 
 class StripeCustomer(Base):

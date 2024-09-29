@@ -10,9 +10,13 @@ class BaseUser(BaseModel):
     email: EmailStr
 
 
-class UserIn(BaseUser):
+class GoogleUserIn(BaseUser):
     google_id: str
     email: EmailStr
+
+
+class UserIn(BaseUser):
+    password: str
 
 
 class UserOut(BaseUser):

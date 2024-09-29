@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from config import get_settings
 from users.models import User, Credits, Feedback
-from users.types import UserIn
+from users.types import GoogleUserIn, UserIn
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -18,6 +18,8 @@ class UserService:
             email=user.email,
             google_id=user.google_id
         )
+        if isinstance(user, UserIn) and user.password:
+            db_user.set_password(user.password)
         db.add(db_user)
         db.commit()
 
@@ -53,7 +55,7 @@ class UserService:
 
 
 class UserAuthenticationService(UserService):
-    async def login(self, db, user: UserIn):
+    async def google_login(self, db, user: GoogleUserIn):
         db_user = db.query(User).filter(
             (User.google_id == user.google_id) | (User.email == user.email)
         ).first()
@@ -63,4 +65,12 @@ class UserAuthenticationService(UserService):
         elif not db_user.google_id and user.google_id:
             db_user.google_id = user.google_id
             db.commit()
+        return db_user
+
+    async def login(self, db, user: UserIn):
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if not db_user:
+            raise ValueError("User not found")
+        if not db_user.check_password(user.password):
+            raise ValueError("Invalid password")
         return db_user
