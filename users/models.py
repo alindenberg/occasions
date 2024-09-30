@@ -22,7 +22,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     feedback = relationship("Feedback", back_populates="user")
     hashed_password = Column(String, nullable=True)
-    email_verified = Column(Boolean, default=False)  # New field
+    is_email_verified = Column(Boolean, default=False)  # New field
     email_verifications = relationship("EmailVerification", back_populates="user")
     refresh_token = Column(String, nullable=True)
 

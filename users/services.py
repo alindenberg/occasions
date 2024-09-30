@@ -35,8 +35,6 @@ class UserService:
 
         db.refresh(db_user)
 
-        asyncio.create_task(self.create_email_verification(db, db_user))
-
         return db_user
 
     async def get_user_by_email(self, db, email):
@@ -61,9 +59,14 @@ class UserService:
         db.refresh(db_feedback)
         return db_feedback
 
-    async def create_email_verification(self, db: Session, user: User) -> str:
+    async def init_email_verification(self, db: Session, user: User) -> str:
         token = secrets.token_urlsafe(32)
-        verification = EmailVerification(user_id=user.id, token=token)
+        verification = EmailVerification(
+            user_id=user.id,
+            token=token,
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1)
+        )
         db.add(verification)
         db.commit()
 
@@ -72,7 +75,7 @@ class UserService:
         return token
 
     async def send_verification_email(self, db: Session, token: str, user: User):
-        verification_url = f"{settings.NEXT_PUBLIC_URL}/verify-email/{token}"
+        verification_url = f"{settings.NEXT_PUBLIC_URL}/verify-email/?token={token}"
         MailService().send_verification_email(user.email, verification_url)
         return verification_url
 
@@ -84,7 +87,7 @@ class UserService:
 
         if verification:
             user = verification.user
-            user.email_verified = True
+            user.is_email_verified = True
             db.delete(verification)
             db.commit()
             return True
@@ -97,8 +100,9 @@ class UserAuthenticationService(UserService):
             (User.google_id == user.google_id) | (User.email == user.email)
         ).first()
         if not db_user:
-            logger.info('creating user')
             db_user = await self.create_user(db, user)
+            db_user.is_email_verified = True
+            db.commit()
         elif not db_user.google_id and user.google_id:
             db_user.google_id = user.google_id
             db.commit()
@@ -121,6 +125,7 @@ class UserAuthenticationService(UserService):
 
     async def signup(self, db, user: UserIn):
         db_user = await self.create_user(db, user)
+        asyncio.create_task(self.init_email_verification(db, db_user))
 
         access_token, expires_at, refresh_token = self.create_auth_tokens(db, db_user, data={"sub": db_user.email})
         return {

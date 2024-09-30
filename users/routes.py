@@ -51,6 +51,12 @@ async def signup(user: UserIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.post("/send-email-verification")
+async def send_email_verification(current_user: Annotated[User, Depends(get_current_user)], db: Session = Depends(get_db)):
+    await UserService().init_email_verification(db, current_user)
+    return {"status": "success", "message": "Verification email sent successfully"}
+
+
 @router.post("/token/refresh")
 async def refresh_token(refresh: RefreshTokenReq, db: Session = Depends(get_db)):
     return await UserAuthenticationService().refresh_token(db, refresh.refresh_token)
@@ -97,7 +103,7 @@ async def submit_feedback(
         )
 
 
-@router.get("/verify-email/{token}")
+@router.post("/verify-email/{token}")
 async def verify_email(token: str, db: Session = Depends(get_db)):
     if await UserService().verify_email(db, token):
         return {"message": "Email verified successfully"}
