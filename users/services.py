@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from config import get_settings
 from mail.services import MailService
 from passlib.context import CryptContext
-from users.models import User, Credits, Feedback, EmailVerification
+from users.models import User, Credits, Feedback, EmailVerification, PasswordReset
 from users.types import GoogleUserIn, UserIn
 import secrets
 
@@ -173,3 +173,37 @@ class UserAuthenticationService(UserService):
 
         new_access_token, expires_at = self._create_access_token({"sub": user.email})
         return {"access_token": new_access_token, "expires_at": expires_at}
+
+    async def request_password_reset(self, db, user):
+        reset_hash = await self.generate_reset_hash(db, user)
+        MailService().send_password_reset_email(user.email, reset_hash)
+        return {"message": "Password reset email sent"}
+
+    async def generate_reset_hash(self, db, user):
+        reset_hash = secrets.token_urlsafe(32)
+        password_reset = PasswordReset(
+            user_id=user.id,
+            token=reset_hash,
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1)
+        )
+        db.add(password_reset)
+        db.commit()
+
+        return reset_hash
+
+    async def reset_password(self, db, reset_hash, new_password):
+        password_reset = db.query(PasswordReset).filter(PasswordReset.token == reset_hash).first()
+        if not password_reset:
+            raise ValueError("Invalid reset hash")
+
+        if password_reset.expires_at.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+            raise ValueError("Reset hash expired")
+
+        user = password_reset.user
+        user.hashed_password = pwd_context.hash(new_password)
+
+        db.delete(password_reset)
+        db.commit()
+
+        return {"message": "Password reset successfully"}

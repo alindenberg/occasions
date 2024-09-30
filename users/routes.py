@@ -6,7 +6,16 @@ from db.database import get_db
 from stripe_utils.services import StripeService
 from users.models import User
 from users.services import UserService, UserAuthenticationService
-from users.types import UserIn, GoogleUserIn, UserOut, CheckoutRequest, FeedbackRequest, RefreshTokenReq
+from users.types import (
+    UserIn,
+    GoogleUserIn,
+    UserOut,
+    CheckoutRequest,
+    FeedbackRequest,
+    RefreshTokenReq,
+    PasswordResetRequest,
+    PasswordReset
+)
 from users.utils import get_current_user
 
 router = APIRouter()
@@ -108,3 +117,17 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
     if await UserService().verify_email(db, token):
         return {"message": "Email verified successfully"}
     raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+
+@router.post("/request-password-reset", status_code=status.HTTP_200_OK)
+async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):
+    logger.info(f"Requesting password reset for {request.email}")
+    user = await UserService().get_user_by_email(db, request.email)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return await UserAuthenticationService().request_password_reset(db, user)
+
+
+@router.post("/reset-password", status_code=status.HTTP_200_OK)
+async def reset_password(request: PasswordReset, db: Session = Depends(get_db)):
+    return await UserAuthenticationService().reset_password(db, request.reset_hash, request.new_password)

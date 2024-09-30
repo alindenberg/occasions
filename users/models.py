@@ -24,6 +24,7 @@ class User(Base):
     hashed_password = Column(String, nullable=True)
     is_email_verified = Column(Boolean, default=False)  # New field
     email_verifications = relationship("EmailVerification", back_populates="user")
+    password_resets = relationship("PasswordReset", back_populates="user")
     refresh_token = Column(String, nullable=True)
 
     def get_stripe_customer(self):
@@ -79,3 +80,15 @@ class EmailVerification(Base):
     expires_at = Column(DateTime, default=datetime.now(timezone.utc) + timedelta(days=1))
 
     user = relationship("User", back_populates="email_verifications")
+
+
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    expires_at = Column(DateTime, default=datetime.now(timezone.utc) + timedelta(hours=1))
+
+    user = relationship("User", back_populates="password_resets")

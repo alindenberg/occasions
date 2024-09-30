@@ -45,3 +45,12 @@ class CheckoutRequest(BaseModel):
 
 class FeedbackRequest(BaseModel):
     feedback: str
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordReset(BaseModel):
+    reset_hash: str
+    new_password: str
