@@ -54,6 +54,18 @@ async def get_current_user(
     raise credentials_exception
 
 
+anon_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
+
+
+async def get_current_user_or_none(
+    token: str | None = Depends(anon_oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    if not token:
+        return None
+    return await get_current_user(token, db)
+
+
 async def email_verified(current_user: Annotated[User, Depends(get_current_user)]):
     if not current_user.email_verified:
         raise HTTPException(

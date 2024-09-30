@@ -16,7 +16,7 @@ from users.types import (
     PasswordResetRequest,
     PasswordReset
 )
-from users.utils import get_current_user
+from users.utils import get_current_user, get_current_user_or_none
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ async def checkout(user: Annotated[User, Depends(get_current_user)], request: Ch
 @router.post("/feedback")
 async def submit_feedback(
     feedback_request: FeedbackRequest,
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User | None, Depends(get_current_user_or_none)],
     db: Session = Depends(get_db)
 ):
     try:
