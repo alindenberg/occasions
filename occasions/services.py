@@ -75,9 +75,9 @@ class OccasionService:
         return occasion
 
     def delete_occasion(self, db: Session, occasion_id: int):
-        # TODO: validate occasion isnt processed yet
-        # TODO: add back a user credi't
         occasion = db.query(Occasion).get(occasion_id)
+        if occasion.date_processed:
+            raise ValueError("Cannot delete a processed occasion")
         occasion.user.add_credits(1)
         db.delete(occasion)
         db.commit()
