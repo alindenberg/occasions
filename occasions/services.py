@@ -32,7 +32,7 @@ class OccasionService:
             kwargs["user_id"] = user.id
             kwargs["email"] = user.email
             occasion = Occasion(**kwargs)
-            self._validate_occasion(db, occasion)
+            self._validate_occasion(occasion)
             db.add(occasion)
             db.commit()
             db.refresh(occasion)
@@ -69,7 +69,7 @@ class OccasionService:
             if key == "date":
                 value = value.isoformat() if value else None
             setattr(occasion, key, value)
-        self._validate_occasion(db, occasion)
+        self._validate_occasion(occasion)
         db.commit()
         db.refresh(occasion)
         return occasion
@@ -125,7 +125,7 @@ class OccasionService:
             "custom_input": occasion.custom_input
         })
 
-    def _validate_occasion(self, db: Session, occasion: Occasion):
+    def _validate_occasion(self, occasion: Occasion):
         self._validate_occasion_tone(occasion)
         self._validate_occasion_type(occasion)
 
