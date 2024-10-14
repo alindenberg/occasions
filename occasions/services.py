@@ -34,16 +34,10 @@ class OccasionService:
             occasion = Occasion(**kwargs)
             self._validate_occasion(db, occasion)
             db.add(occasion)
+
+            user.credits.credits -= 1
             db.commit()
             db.refresh(occasion)
-
-            try:
-                print(user.credits.credits)
-                print(user.credits.credits - 1)
-                user.credits.credits -= 1
-                db.commit()
-            except Exception as exc:
-                logger.error(f"Error updating credits for user {user.id}. {exc}")
 
             return occasion
         except (ValueError, Exception):
@@ -89,6 +83,10 @@ class OccasionService:
                 logger.warning(f"Occasion {occasion.id} has already been processed")
                 return
 
+            if occasion.is_draft:
+                logger.warning(f"Occasion {occasion.id} is in draft state and cannot be processed")
+                return
+
             logger.info(f"Processing occasion {occasion.id}")
             summary = await self._generate_summary(occasion)
 
@@ -108,23 +106,28 @@ class OccasionService:
 
     def _create_is_recurring_occasion(self, db: Session, original_occasion: Occasion):
         try:
-            new_date = datetime.fromisoformat(original_occasion.date) + timedelta(days=365)
+            user = db.query(User).get(original_occasion.user_id)
+
             new_occasion = Occasion(
-                label=original_occasion.label,
-                type=original_occasion.type,
-                tone=original_occasion.tone,
-                email=original_occasion.email,
-                date=new_date.isoformat(),
-                custom_input=original_occasion.custom_input,
-                user_id=original_occasion.user_id,
-                is_recurring=original_occasion.is_recurring,
-                created=datetime.now(timezone.utc).isoformat()
-            )
-            db.add(new_occasion)
-            db.commit()
-            logger.info(f"Created is_recurring occasion {new_occasion.id} for original occasion {original_occasion.id}")
+                    label=original_occasion.label,
+                    type=original_occasion.type,
+                    tone=original_occasion.tone,
+                    email=original_occasion.email,
+                    date=(datetime.fromisoformat(original_occasion.date) + timedelta(days=365)).isoformat(),
+                    custom_input=original_occasion.custom_input,
+                    user_id=original_occasion.user_id,
+                    is_recurring=original_occasion.is_recurring,
+                    created=datetime.now(timezone.utc).isoformat(),
+                    is_draft=True
+                )
+            if user.credits.credits > 0:
+                new_occasion.is_draft = False
+                user.credits.credits -= 1
+                db.add(new_occasion)
+                db.commit()
+                logger.info(f"Created {'draft' if new_occasion.is_draft else 'recurring'} occasion {new_occasion.id} for original occasion {original_occasion.id}")
         except Exception as exc:
-            logger.error(f"Error creating is_recurring occasion for {original_occasion.id}. {exc}")
+            logger.error(f"Error creating recurring occasion for {original_occasion.id}. {exc}")
             db.rollback()
 
     async def _send_summary(self, recipient_email, occasion_label, summary):
@@ -164,3 +167,19 @@ class OccasionService:
             if occasion.type == occasion_type.value:
                 return
         raise ValueError("Invalid occasion type")
+
+    def activate_draft_occasion(self, db: Session, occasion_id: int, user: User):
+        occasion = db.query(Occasion).get(occasion_id)
+        if not occasion or occasion.user_id != user.id:
+            raise ValueError("Occasion not found or doesn't belong to the user")
+
+        if not occasion.is_draft:
+            raise ValueError("Occasion is not in draft state")
+
+        if user.credits.credits <= 0:
+            raise ValueError("Insufficient credits to activate the occasion")
+
+        occasion.is_draft = False
+        user.credits.credits -= 1
+        db.commit()
+        return occasion

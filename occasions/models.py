@@ -24,3 +24,4 @@ class Occasion(Base):
     user_id = Column(Integer, ForeignKey('users.id'), index=True, nullable=False)
     user = relationship("User", back_populates="occasions")
     is_recurring = Column(Boolean, default=False)
+    is_draft = Column(Boolean, default=False)

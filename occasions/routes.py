@@ -65,3 +65,20 @@ async def delete_occasion(occasion_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"An error occurred while deleting the occasion - {e}")
         raise HTTPException(status_code=500, detail="An error occurred while deleting the occasion")
+
+
+@router.post("/occasions/{occasion_id}/activate")
+async def activate_draft_occasion(
+    occasion_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        activated_occasion = OccasionService().activate_draft_occasion(db, occasion_id, user)
+        return {"message": "Draft occasion activated successfully", "occasion": activated_occasion}
+    except ValueError as e:
+        logger.error(f"Value error raised while activating draft occasion - {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"An error occurred while activating draft occasion - {e}")
+        raise HTTPException(status_code=500, detail="An error occurred while activating draft occasion")

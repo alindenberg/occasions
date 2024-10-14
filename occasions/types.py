@@ -37,3 +37,4 @@ class OccasionOut(OccasionIn):
     date_processed: Optional[datetime]
     summary: Optional[str]
     created: datetime
+    is_draft: bool
