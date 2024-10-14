@@ -1,7 +1,7 @@
 import asyncio
 import logging
+from datetime import datetime, timezone, timedelta
 
-from datetime import datetime, timezone
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
@@ -98,9 +98,33 @@ class OccasionService:
 
             asyncio.create_task(self._send_summary(occasion.user.email, occasion.label, summary))
 
+            if occasion.is_recurring:
+                self._create_is_recurring_occasion(db, occasion)
+
             logger.info(f"Occasion {occasion.id} processed successfully")
         except Exception as exc:
             logger.error(f"Error processing occasion {occasion.id}. {exc}")
+            db.rollback()
+
+    def _create_is_recurring_occasion(self, db: Session, original_occasion: Occasion):
+        try:
+            new_date = datetime.fromisoformat(original_occasion.date) + timedelta(days=365)
+            new_occasion = Occasion(
+                label=original_occasion.label,
+                type=original_occasion.type,
+                tone=original_occasion.tone,
+                email=original_occasion.email,
+                date=new_date.isoformat(),
+                custom_input=original_occasion.custom_input,
+                user_id=original_occasion.user_id,
+                is_recurring=original_occasion.is_recurring,
+                created=datetime.now(timezone.utc).isoformat()
+            )
+            db.add(new_occasion)
+            db.commit()
+            logger.info(f"Created is_recurring occasion {new_occasion.id} for original occasion {original_occasion.id}")
+        except Exception as exc:
+            logger.error(f"Error creating is_recurring occasion for {original_occasion.id}. {exc}")
             db.rollback()
 
     async def _send_summary(self, recipient_email, occasion_label, summary):

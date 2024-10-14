@@ -1,5 +1,5 @@
 import logging
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 
 from db.database import Base
@@ -23,3 +23,4 @@ class Occasion(Base):
     date_processed = Column(String, nullable=True)
     user_id = Column(Integer, ForeignKey('users.id'), index=True, nullable=False)
     user = relationship("User", back_populates="occasions")
+    is_recurring = Column(Boolean, default=False)

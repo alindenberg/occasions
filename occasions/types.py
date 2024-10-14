@@ -27,6 +27,7 @@ class OccasionIn(BaseModel):
     tone: OccasionTone
     date: datetime
     custom_input: Optional[str]
+    is_recurring: bool = False
 
 
 class OccasionOut(OccasionIn):
