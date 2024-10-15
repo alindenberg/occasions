@@ -121,6 +121,7 @@ class OccasionService:
                     is_draft=True
                 )
             if user.credits.credits > 0:
+                logger.info(f"User {user.id} has enough credits to create a new occasion for recurring event")
                 new_occasion.is_draft = False
                 user.credits.credits -= 1
 
