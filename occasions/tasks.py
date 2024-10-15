@@ -22,6 +22,7 @@ async def repeat_func(seconds: int, func):
 async def process_ocassions(db: Session):
     service = OccasionService()
     occasions = db.query(Occasion).filter(
+        Occasion.is_draft.is_(False),
         Occasion.date_processed.is_(None),
         Occasion.date < datetime.now(timezone.utc).isoformat()
     ).all()
