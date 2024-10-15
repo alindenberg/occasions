@@ -123,9 +123,10 @@ class OccasionService:
             if user.credits.credits > 0:
                 new_occasion.is_draft = False
                 user.credits.credits -= 1
-                db.add(new_occasion)
-                db.commit()
-                logger.info(f"Created {'draft' if new_occasion.is_draft else 'recurring'} occasion {new_occasion.id} for original occasion {original_occasion.id}")
+
+            db.add(new_occasion)
+            db.commit()
+            logger.info(f"Created {'draft' if new_occasion.is_draft else 'recurring'} occasion {new_occasion.id} for original occasion {original_occasion.id}")
         except Exception as exc:
             logger.error(f"Error creating recurring occasion for {original_occasion.id}. {exc}")
             db.rollback()
