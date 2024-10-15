@@ -27,7 +27,7 @@ class OccasionIn(BaseModel):
     tone: OccasionTone
     date: datetime
     custom_input: Optional[str]
-    is_recurring: bool = False
+    is_recurring: Optional[bool] = False
 
 
 class OccasionOut(OccasionIn):
@@ -37,4 +37,4 @@ class OccasionOut(OccasionIn):
     date_processed: Optional[datetime]
     summary: Optional[str]
     created: datetime
-    is_draft: bool
+    is_draft: Optional[bool] = False
