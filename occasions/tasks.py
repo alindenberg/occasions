@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sqlalchemy as sa
 
 from datetime import datetime, timezone
 from fastapi import FastAPI
@@ -22,12 +23,28 @@ async def repeat_func(seconds: int, func):
 async def process_ocassions(db: Session):
     service = OccasionService()
     occasions = db.query(Occasion).filter(
-        Occasion.is_draft.is_(False),
-        Occasion.date_processed.is_(None),
-        Occasion.date < datetime.now(timezone.utc).isoformat()
+        sa.and_(
+            Occasion.is_draft.is_(False),
+            Occasion.date_processed.is_(None),
+            Occasion.is_processing.is_(False),
+            Occasion.date < datetime.now(timezone.utc).isoformat()
+        )
     ).all()
+
+    # Mark occasions as processing
     for occasion in occasions:
-        asyncio.create_task(service.process_occasion(db, occasion))
+        occasion.is_processing = True
+    db.commit()
+
+    # Process occasions
+    for occasion in occasions:
+        try:
+            await service.process_occasion(db, occasion)
+        except Exception as e:
+            logger.error(f"Error processing occasion {occasion.id}: {str(e)}")
+        finally:
+            occasion.is_processing = False
+            db.commit()
 
 
 class OccasionTasks():

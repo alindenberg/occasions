@@ -97,14 +97,14 @@ class OccasionService:
             asyncio.create_task(self._send_summary(occasion.user.email, occasion.label, summary))
 
             if occasion.is_recurring:
-                self._create_is_recurring_occasion(db, occasion)
+                self._recreate_recurring_occasion(db, occasion)
 
             logger.info(f"Occasion {occasion.id} processed successfully")
         except Exception as exc:
             logger.error(f"Error processing occasion {occasion.id}. {exc}")
             db.rollback()
 
-    def _create_is_recurring_occasion(self, db: Session, original_occasion: Occasion):
+    def _recreate_recurring_occasion(self, db: Session, original_occasion: Occasion):
         try:
             user = db.query(User).get(original_occasion.user_id)
 

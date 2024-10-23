@@ -25,3 +25,4 @@ class Occasion(Base):
     user = relationship("User", back_populates="occasions")
     is_recurring = Column(Boolean, default=False)
     is_draft = Column(Boolean, default=False)
+    is_processing = Column(Boolean, nullable=False, default=False)
