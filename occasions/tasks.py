@@ -24,7 +24,7 @@ async def process_ocassions(db: Session):
     service = OccasionService()
     occasions = db.query(Occasion).filter(
         sa.and_(
-            Occasion.is_draft.is_(False),
+            sa.or_(Occasion.is_draft.is_(False), Occasion.is_draft.is_(None)),
             Occasion.date_processed.is_(None),
             Occasion.is_processing.is_(False),
             Occasion.date < datetime.now(timezone.utc).isoformat()
