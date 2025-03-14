@@ -57,8 +57,7 @@ class OccasionService:
             raise ValueError("Occasion not found")
         return occasion
 
-    def update_occasion(self, db: Session, occasion_id: int, **kwargs):
-        occasion = db.query(Occasion).get(occasion_id)
+    def update_occasion(self, db: Session, occasion: Occasion, **kwargs):
         for key, value in kwargs.items():
             if key == "date":
                 value = value.isoformat() if value else None
@@ -68,10 +67,7 @@ class OccasionService:
         db.refresh(occasion)
         return occasion
 
-    def delete_occasion(self, db: Session, occasion_id: int):
-        # TODO: validate occasion isnt processed yet
-        # TODO: add back a user credi't
-        occasion = db.query(Occasion).get(occasion_id)
+    def delete_occasion(self, db: Session, occasion: Occasion):
         occasion.user.add_credits(1)
         db.delete(occasion)
         db.commit()

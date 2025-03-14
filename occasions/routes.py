@@ -2,6 +2,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime, timezone
 
 from db.database import get_db
 from occasions.services import OccasionService
@@ -48,23 +49,72 @@ async def get_occasion(occasion_id: int, db: Session = Depends(get_db), user: Us
 
 
 @router.put("/occasions/{occasion_id}")
-async def update_occasion(occasion_id: int, occasion: OccasionIn, db: Session = Depends(get_db)):
+async def update_occasion(
+    occasion_id: int,
+    occasion: OccasionIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
     try:
-        OccasionService().update_occasion(db, occasion_id, **occasion.model_dump())
+        # Get the occasion to check if it's a draft or has a future date
+        existing_occasion = OccasionService().get_occasion(db, occasion_id, user.id)
+
+        # Check if the occasion is a draft or has a future date
+        if not existing_occasion.is_draft and datetime.fromisoformat(existing_occasion.date) <= datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot modify processed occasions"
+            )
+
+        # If it's a draft or has a future date, proceed with modification
+        OccasionService().update_occasion(db, existing_occasion, **occasion.model_dump())
         return {"message": "Occasion updated successfully"}
+    except ValueError as e:
+        logger.error(f"Value error raised while updating the occasion - {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"An error occurred while updating the occasion - {e}")
-        raise HTTPException(status_code=500, detail="An error occurred while updating the occasion")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while updating the occasion"
+        )
 
 
 @router.delete("/occasions/{occasion_id}")
-async def delete_occasion(occasion_id: int, db: Session = Depends(get_db)):
+async def delete_occasion(
+    occasion_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
     try:
+        # Get the occasion to check if it's a draft or has a future date
+        existing_occasion = OccasionService().get_occasion(db, occasion_id, user.id)
+
+        # Check if the occasion is a draft or has a future date
+        if not existing_occasion.is_draft and datetime.fromisoformat(existing_occasion.date) <= datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot delete processed occasions"
+            )
+
+        # If it's a draft or has a future date, proceed with deletion
         OccasionService().delete_occasion(db, occasion_id)
         return {"message": "Occasion deleted successfully"}
+    except ValueError as e:
+        logger.error(f"Value error raised while deleting the occasion - {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        # Re-raise HTTP exceptions
+        raise e
     except Exception as e:
         logger.error(f"An error occurred while deleting the occasion - {e}")
-        raise HTTPException(status_code=500, detail="An error occurred while deleting the occasion")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while deleting the occasion"
+        )
 
 
 @router.post("/occasions/{occasion_id}/activate")
