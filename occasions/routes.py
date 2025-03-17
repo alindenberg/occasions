@@ -101,7 +101,7 @@ async def delete_occasion(
             )
 
         # If it's a draft or has a future date, proceed with deletion
-        OccasionService().delete_occasion(db, occasion_id)
+        OccasionService().delete_occasion(db, existing_occasion)
         return {"message": "Occasion deleted successfully"}
     except ValueError as e:
         logger.error(f"Value error raised while deleting the occasion - {e}")
